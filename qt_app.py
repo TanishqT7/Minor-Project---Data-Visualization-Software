@@ -8,7 +8,9 @@ from PyQt5.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
-    QTextEdit
+    QTextEdit,
+    QTableWidget,
+    QTableWidgetItem,
 )
 from data_handler import DataHandler
 
@@ -20,6 +22,8 @@ class App(QMainWindow):
         self.setGeometry(100, 100, 600, 400)
 
         self.handler = DataHandler()
+
+        self.load_stylesheet('style.qss')
 
         self.initUI()
 
@@ -40,16 +44,19 @@ class App(QMainWindow):
         self.dep_var_inp = QLineEdit(self)
         self.dep_var_inp.setPlaceholderText("Dependent Variable")
         layout.addWidget(self.dep_var_inp)
-        
+
         self.indep_var_inp = QLineEdit(self)
         self.indep_var_inp.setPlaceholderText("Independent Variable")
         layout.addWidget(self.indep_var_inp)
 
         self.sub_vars_button = QPushButton("Submit Variables", self)
         self.sub_vars_button.clicked.connect(self.submit_variables)
-        layout.addWidget(self.sub_vars_button) 
+        layout.addWidget(self.sub_vars_button)
 
-        self.setLayout(layout)
+        self.table_widget = QTableWidget(self)
+        layout.addWidget(self.table_widget)
+
+        # self.setLayout(layout)
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
@@ -59,7 +66,7 @@ class App(QMainWindow):
         file_path = self.file_path_input.text()
 
         try:
-            data = self.handler.load_file(file_path)
+            self.data = self.handler.load_file(file_path)
             self.display_text.append("Data Loaded Successfully!")
             self.display_columns()
 
@@ -75,19 +82,45 @@ class App(QMainWindow):
         except ValueError as e:
             QMessageBox.critical(self, "Error", str(e))
 
-    
     def submit_variables(self):
-        dep_vars = self.dep_var_inp.text()
-        indep_vars = self.indep_var_inp.text()
 
         try:
+
+            dep_vars = self.dep_var_inp.text()
+            indep_vars = self.indep_var_inp.text()
+
             self.handler.set_dependent_variable(dep_vars)
             self.handler.set_independent_variable(indep_vars)
+
             self.display_text.append(f"Dependent variable: {dep_vars}")
             self.display_text.append(f"Independent variables: {indep_vars}")
 
+            self.disp_sele_var()
+
         except ValueError as e:
             QMessageBox.critical(self, "Error", str(e))
+
+    def disp_sele_var(self):
+        selec_var = [self.handler.dependent_variable] + \
+            self.handler.independent_variable
+
+        selec_data = self.data[selec_var]
+
+        self.table_widget.setRowCount(len(selec_data))
+        self.table_widget.setColumnCount(len(selec_var))
+        self.table_widget.setHorizontalHeaderLabels(selec_var)
+
+        for r_idx, r_data in selec_data.iterrows():
+            for c_idx, c_data in enumerate(selec_var):
+                self.table_widget.setItem(
+                    r_idx, c_idx, QTableWidgetItem(str(r_data[c_data])))
+
+    def load_stylesheet(self, file_name):
+        try:
+            with open(file_name, 'r') as file:
+                self.setStyleSheet(file.read())
+        except FileNotFoundError:
+            print(f"Error: QSS file {file_name} not found!")
 
 
 if __name__ == "__main__":
