@@ -1,5 +1,5 @@
 import pandas as pd
-
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 class DataHandler():
     def __init__(self):
@@ -91,3 +91,57 @@ class DataHandler():
         selected_vars = [self.dependent_variable] + self.independent_variable
 
         print(self.data[selected_vars].head(5))
+
+    def handle_missing_values(self, strat="drop", fill_value=None):
+
+        if strat == "drop":
+            self.data = self.data.dropna()
+        elif strat == "fill":
+            if fill_value == "mean":
+                self.data = self.data.fillna(self.data.mean())
+            elif fill_value == "median":
+                self.data = self.data.fillna(self.data.median())
+            else:
+                self.data = self.data.fillna(fill_value)
+        else:
+            raise ValueError("Unsupported missing data Strategy. Use \"Fill\" or \"Drop\".")
+        
+    def remove_duplicates(self):
+        self.data = self.data.drop_duplicates()
+
+    def normalize_data(self, columns=None):
+
+        scaler = MinMaxScaler()
+        if columns is None:
+            self.data[self.data.select_dtypes(include=["float64", "int64"]).columns] = scaler.fit_transform(self.data.select_dtypes(include=["float64", "int64"]))
+
+        else:
+            self.data[columns] = scaler.fit_transform(self.data[columns])
+
+    def standardize_data(self, columns=None):
+
+        scaler = StandardScaler()
+        if columns is None:
+            self.data[self.data.select_dtypes(include=["float64", "int64"]).columns] = scaler.fit_transform(
+                self.data.select_dtypes(include=["float64", "int64"]))
+
+        else:
+            self.data[columns] = scaler.fit_transform(self.data[columns])
+
+    def encode_cat_variables(self, columns=None):
+
+        if columns is None:
+            self.data = pd.get_dummies(self.data)
+        else:
+            self.data = pd.get_dummies(self.data, columns=columns)
+
+    def remove_outliers(self, z_thresh=3):
+
+        from scipy import stats
+
+        z_score = stats.zscore(self.data.select_dtypes(include=["float64", "int64"]))
+        abs_z_score = abs(z_score)
+
+        filtered_entries = (abs_z_score < z_thresh).all(axis=1)
+
+        self.data = self.data[filtered_entries]
