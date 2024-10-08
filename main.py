@@ -79,19 +79,23 @@ def main():
                             try:
                                 strat = input(
                                     "How would you like to handle missing values? (drop or fill): ")
-                                if strat == "fill":
-                                    fill_value = input(
-                                        "Enter the Fill value ('mean', 'median', or specific value): ")
-                                    if fill_value in ['mean', 'median']:
-                                        handler.handle_missing_values(
-                                            strat="fill", fill_value=fill_value)
-                                    else:
-                                        handler.handle_missing_values(
-                                            strat="fill", fill_value=float(fill_value))
-                                else:
-                                    handler.handle_missing_values(strat="drop")
-                                    print("Dropped the missing values!")
+                                if strat == "exit":
+                                    print("Exited Handling Missing Values!")
                                     break
+                                else:
+                                    if strat == "fill":
+                                        fill_value = input(
+                                            "Enter the Fill value ('mean', 'median', or specific value): ")
+                                        if fill_value in ['mean', 'median']:
+                                            handler.handle_missing_values(
+                                                strat="fill", fill_value=fill_value)
+                                        else:
+                                            handler.handle_missing_values(
+                                                strat="fill", fill_value=float(fill_value))
+                                    else:
+                                        handler.handle_missing_values(strat="drop")
+                                        print("Dropped the missing values!")
+                                        break
                             except ValueError as e:
                                 print(f"Invalid input: {e}")
                             except Exception as e:
@@ -107,12 +111,16 @@ def main():
                             try:
                                 columns = input(
                                     "Enter the columns to normalize (comma-separated), or press Enter for all numeric columns: ")
-                                columns = columns.split(
-                                    ',') if columns else None
-                                columns = [col.strip() for col in columns]
-                                handler.normalize_data(columns=columns)
-                                print("Data Normalized")
-                                break
+                                if columns == "exit":
+                                    print("Exited Normalizing Data!")
+                                    break
+                                else:
+                                    columns = columns.split(
+                                        ',') if columns else None
+                                    columns = [col.strip() for col in columns]
+                                    handler.normalize_data(columns=columns)
+                                    print("Data Normalized")
+                                    break
                             except ValueError as e:
                                 print(f"Invalid input: {e}")
                             except Exception as e:
@@ -123,12 +131,16 @@ def main():
                             try:
                                 columns = input(
                                     "Enter the columns to standardize (comma-separated), or press Enter for all numeric columns: ")
-                                columns = columns.split(
-                                    ',') if columns else None
-                                columns = [col.strip() for col in columns]
-                                handler.standardize_data(columns=columns)
-                                print("Data Standardized")
-                                break
+                                if columns == "exit":
+                                    print("Exited Standardizing Data!")
+                                    break
+                                else:
+                                    columns = columns.split(
+                                        ',') if columns else None
+                                    columns = [col.strip() for col in columns]
+                                    handler.standardize_data(columns=columns)
+                                    print("Data Standardized")
+                                    break
                             except ValueError as e:
                                 print(f"Invalid input: {e}")
                             except Exception as e:
@@ -139,12 +151,16 @@ def main():
                             try:
                                 columns = input(
                                     "Enter the columns to encode (comma-separated), or press Enter for all categorical columns: ")
-                                columns = columns.split(
-                                    ',') if columns else None
-                                columns = [col.strip() for col in columns]
-                                handler.encode_cat_variables(columns=columns)
-                                print("Data Encoded")
-                                break
+                                if columns == "exit":
+                                    print("Exited Encoding Data!")
+                                    break
+                                else:
+                                    columns = columns.split(
+                                        ',') if columns else None
+                                    columns = [col.strip() for col in columns]
+                                    handler.encode_cat_variables(columns=columns)
+                                    print("Data Encoded")
+                                    break
                             except ValueError as e:
                                 print(f"Invalid input: {e}")
                             except Exception as e:
@@ -155,10 +171,14 @@ def main():
                             try:
                                 z_threshold = float(
                                     input("Enter the z threshold to remove outliers, (Default is 3): ") or 3)
-                                handler.remove_outliers(z_thresh=z_threshold)
-                                print(
-                                    f"Outliers removed with Z Threshold {z_threshold}")
-                                break
+                                if z_threshold == "exit":
+                                    print("Exited Removing Outliers!")
+                                    break
+                                else:
+                                    handler.remove_outliers(z_thresh=z_threshold)
+                                    print(
+                                        f"Outliers removed with Z Threshold {z_threshold}")
+                                    break
                             except ValueError as e:
                                 print(f"Invalid input: {e}")
                             except Exception as e:
@@ -169,8 +189,12 @@ def main():
                             try:
                                 disp_rows = int(
                                     input("Enter the number of rows to display: "))
-                                handler.display_rows(disp_rows)
-                                break
+                                if disp_rows == "exit":
+                                    print("Exited Displaying Data!")
+                                    break
+                                else:
+                                    handler.display_usable_data()
+                                    break
                             except ValueError as e:
                                 print(f"Invalid number of Rows: {e}")
                             except Exception as e:

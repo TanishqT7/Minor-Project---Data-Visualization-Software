@@ -3,18 +3,21 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 class DataHandler():
     def __init__(self):
-        self.data = None
+        self.main_data = None
+        self.usable_data = None
         self.file_type = None
+        self.dependent_variable = None
+        self.independent_variable = []
 
     def load_file(self, file_path: str):
 
         try:
             if file_path.endswith('.csv'):
-                self.data = pd.read_csv(file_path)
+                self.main_data = pd.read_csv(file_path)
                 self.file_type = 'csv'
 
             elif file_path.endswith('.xlsx'):
-                self.data = pd.read_excel(file_path)
+                self.main_data = pd.read_excel(file_path)
                 self.file_type = 'xlsx'
 
             else:
@@ -22,37 +25,37 @@ class DataHandler():
                     "Unsupported file type, Please use a CSV or XLSX file.")
 
             self.validate_data()
-            return self.data
+            return self.main_data
 
         except Exception as e:
             raise ValueError(f"Error loading file: {e}")
 
     def validate_data(self):
 
-        if self.data is None or self.data.empty:
+        if self.main_data is None or self.main_data.empty:
             raise ValueError("No data found in the file.")
 
-        if len(self.data.columns) < 2:
+        if len(self.main_data.columns) < 2:
             raise ValueError("File must contain at least two columns.")
 
     def get_columns(self):
 
-        if self.data is not None:
-            return list(self.data.columns)
+        if self.main_data is not None:
+            return list(self.main_data.columns)
         else:
             raise ValueError("No data loaded.")
 
     def display_rows(self, num_rows: int):
 
-        if self.data is None:
+        if self.main_data is None:
             raise ValueError("No data loaded!")
 
         if num_rows <= 0:
             raise ValueError("Please enter positive number of rows.")
 
-        total_rows = min(num_rows, len(self.data))
+        total_rows = min(num_rows, len(self.main_data))
 
-        print(self.data.head(total_rows))
+        print(self.main_data.head(total_rows))
 
     def set_dependent_variable(self, var: str):
 
@@ -89,59 +92,64 @@ class DataHandler():
             raise ValueError("No independent variables set.")
 
         selected_vars = [self.dependent_variable] + self.independent_variable
-
-        print(self.data[selected_vars].head(5))
+        self.usable_data = self.main_data[selected_vars].copy()
+        print(self.usable_data.head(5))
 
     def handle_missing_values(self, strat="drop", fill_value=None):
 
         if strat == "drop":
-            self.data = self.data.dropna()
+            self.usable_data = self.usable_data.dropna(inplace=True)
         elif strat == "fill":
             if fill_value == "mean":
-                self.data = self.data.fillna(self.data.mean())
+                self.usable_data = self.usable_data.fillna(self.usable_data.mean(), inplace=True)
             elif fill_value == "median":
-                self.data = self.data.fillna(self.data.median())
+                self.usable_data = self.usable_data.fillna(self.usable_data.median(), inplace=True)
             else:
-                self.data = self.data.fillna(fill_value)
+                self.usable_data = self.usable_data.fillna(fill_value, inplace=True)
         else:
             raise ValueError("Unsupported missing data Strategy. Use \"Fill\" or \"Drop\".")
         
     def remove_duplicates(self):
-        self.data = self.data.drop_duplicates()
+        self.usable_data.drop_duplicates(inplace=True)
 
     def normalize_data(self, columns=None):
 
         scaler = MinMaxScaler()
         if columns is None:
-            self.data[self.data.select_dtypes(include=["float64", "int64"]).columns] = scaler.fit_transform(self.data.select_dtypes(include=["float64", "int64"]))
+            norm_cols = self.usable_data.select_dtypes(
+                include=["float64", "int64"]).columns
 
         else:
-            self.data[columns] = scaler.fit_transform(self.data[columns])
+            norm_cols = columns
+        scaled_data = scaler.fit_transform(self.usable_data[norm_cols])
+        self.usable_data[norm_cols] = pd.DataFrame(scaled_data, columns=norm_cols, index=self.usable_data.index)
 
     def standardize_data(self, columns=None):
 
         scaler = StandardScaler()
         if columns is None:
-            self.data[self.data.select_dtypes(include=["float64", "int64"]).columns] = scaler.fit_transform(
-                self.data.select_dtypes(include=["float64", "int64"]))
+            stand_cols = self.usable_data[self.usable_data.select_dtypes(include=["float64", "int64"]).columns]
 
         else:
-            self.data[columns] = scaler.fit_transform(self.data[columns])
+            stand_cols = columns
+        scaled_data = scaler.fit_transform(self.usable_data[stand_cols])
+        self.usable_data[columns] = pd.DataFrame(scaled_data, columns=stand_cols, index=self.usable_data.index)
 
     def encode_cat_variables(self, columns=None):
 
-        if columns is None:
-            self.data = pd.get_dummies(self.data)
-        else:
-            self.data = pd.get_dummies(self.data, columns=columns)
+        self.usable_data = pd.get_dummies(self.usable_data, columns=columns)
 
     def remove_outliers(self, z_thresh=3):
 
         from scipy import stats
-
-        z_score = stats.zscore(self.data.select_dtypes(include=["float64", "int64"]))
+        
+        num_cols = self.usable_data.select_dtypes(include=["float64", "int64"])
+        z_score = stats.zscore(num_cols)
         abs_z_score = abs(z_score)
 
         filtered_entries = (abs_z_score < z_thresh).all(axis=1)
 
-        self.data = self.data[filtered_entries]
+        self.usable_data = self.usable_data[filtered_entries]
+
+    def display_usable_data(self):
+        print(self.usable_data.head())
