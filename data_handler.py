@@ -98,14 +98,14 @@ class DataHandler():
     def handle_missing_values(self, strat="drop", fill_value=None):
 
         if strat == "drop":
-            self.usable_data = self.usable_data.dropna(inplace=True)
+            self.usable_data.dropna(inplace=True)
         elif strat == "fill":
             if fill_value == "mean":
-                self.usable_data = self.usable_data.fillna(self.usable_data.mean(), inplace=True)
+                self.usable_data.fillna(self.usable_data.mean(), inplace=True)
             elif fill_value == "median":
-                self.usable_data = self.usable_data.fillna(self.usable_data.median(), inplace=True)
+                self.usable_data.fillna(self.usable_data.median(), inplace=True)
             else:
-                self.usable_data = self.usable_data.fillna(fill_value, inplace=True)
+                self.usable_data.fillna(fill_value, inplace=True)
         else:
             raise ValueError("Unsupported missing data Strategy. Use \"Fill\" or \"Drop\".")
         
@@ -133,7 +133,7 @@ class DataHandler():
         else:
             stand_cols = columns
         scaled_data = scaler.fit_transform(self.usable_data[stand_cols])
-        self.usable_data[columns] = pd.DataFrame(scaled_data, columns=stand_cols, index=self.usable_data.index)
+        self.usable_data[stand_cols] = pd.DataFrame(scaled_data, columns=stand_cols, index=self.usable_data.index)
 
     def encode_cat_variables(self, columns=None):
 
