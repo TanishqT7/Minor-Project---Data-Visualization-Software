@@ -11,6 +11,10 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QTableWidget,
     QTableWidgetItem,
+    QComboBox,
+    QInputDialog,
+    QDialog,
+    QFormLayout,
 )
 from data_handler import DataHandler
 
@@ -53,6 +57,10 @@ class App(QMainWindow):
         self.sub_vars_button.clicked.connect(self.submit_variables)
         layout.addWidget(self.sub_vars_button)
 
+        self.clean_button = QPushButton("Data Cleaning Options", self)
+        self.clean_button.clicked.connect(self.data_cleaning_options)
+        layout.addWidget(self.clean_button)
+
         self.table_widget = QTableWidget(self)
         layout.addWidget(self.table_widget)
 
@@ -92,6 +100,8 @@ class App(QMainWindow):
             self.handler.set_dependent_variable(dep_vars)
             self.handler.set_independent_variable(indep_vars)
 
+            self.handler.disp_sel_var()
+
             self.display_text.append(f"Dependent variable: {dep_vars}")
             self.display_text.append(f"Independent variables: {indep_vars}")
 
@@ -101,19 +111,132 @@ class App(QMainWindow):
             QMessageBox.critical(self, "Error", str(e))
 
     def disp_sele_var(self):
+
+        if self.handler.usable_data is None or self.handler.usable_data.empty:
+            QMessageBox.critical(self, "Error", "Usable Data is empty or None")
+            return
+
         selec_var = [self.handler.dependent_variable] + \
             self.handler.independent_variable
 
-        selec_data = self.data[selec_var]
+        try:
 
-        self.table_widget.setRowCount(len(selec_data))
-        self.table_widget.setColumnCount(len(selec_var))
-        self.table_widget.setHorizontalHeaderLabels(selec_var)
+            selec_data = self.data[selec_var]
 
-        for r_idx, r_data in selec_data.iterrows():
-            for c_idx, c_data in enumerate(selec_var):
-                self.table_widget.setItem(
-                    r_idx, c_idx, QTableWidgetItem(str(r_data[c_data])))
+            self.table_widget.setRowCount(len(selec_data))
+            self.table_widget.setColumnCount(len(selec_var))
+            self.table_widget.setHorizontalHeaderLabels(selec_var)
+
+            for r_idx, r_data in selec_data.iterrows():
+                for c_idx, c_data in enumerate(selec_var):
+                    self.table_widget.setItem(
+                        r_idx, c_idx, QTableWidgetItem(str(r_data[c_data])))
+
+        except KeyError as e:
+            QMessageBox.critical(
+                self, "Error", f"Error Displaying selected variables: {e}")
+
+    def data_cleaning_options(self):
+        options = [
+            "Handle Missing Data",
+            "Remove Duplicates",
+            "Normalize Data",
+            "Standardize Data",
+            "Encode Categorical Data",
+            "Remove Outliers",
+        ]
+
+        choice, ok = QInputDialog.getItem(
+            self, "Data Cleaning Options", "Select an Option: ", options, 0, False
+        )
+
+        if ok and choice:
+            if choice == "Handle Missing Data":
+                self.handle_missing_data()
+            elif choice == "Remove Duplicates":
+                self.remove_duplicates()
+            elif choice == "Normalize Data":
+                self.normalize_data()
+            elif choice == "Standardize Data":
+                self.standardize_data()
+            elif choice == "Encode Categorical Data":
+                self.encode_categorical_data()
+            elif choice == "Remove Outliers":
+                self.remove_outliers()
+
+    def handle_missing_data(self):
+        strat, ok = QInputDialog.getItem(
+            self, "Handling Missing Data", "Choose Strategy: (Drop / Fill): ", [
+                "drop", "fill"], 0, False
+        )
+
+        if ok:
+            if strat == "fill":
+                fill_value, ok_fill = QInputDialog.getText(
+                    self, "Fill Value", "Enter Fill Value(mean / median / specific): "
+                )
+                if ok_fill:
+                    self.handler.handle_missing_values(
+                        strat="fill", fill_value=fill_value)
+                    self.display_text.append(
+                        f"Filled missing values using {fill_value}")
+            elif strat == "drop":
+                self.handler.handle_missing_values(strat="drop")
+                self.display_text.append("Dropped missing values")
+
+            self.disp_sele_var()
+
+    def remove_duplicates(self):
+        self.handler.remove_duplicates()
+        self.display_text.append("Removed Duplicates")
+        self.disp_sele_var()
+
+    def normalize_data(self):
+
+        norm_cols_qt, ok = QInputDialog.getText(
+            self, "Normalize Data", "Enter columns to normalize (Comma-Separated): "
+        )
+
+        if ok:
+            norm_cols_qt = norm_cols_qt.split(",") if norm_cols_qt else None
+            norm_cols_qt = [cols.strip() for cols in norm_cols_qt]
+            self.handler.normalize_data(columns=norm_cols_qt)
+            self.display_text.append("Data Normalized")
+            self.disp_sele_var()
+
+    def standardize_data(self):
+        stand_cols_qt, ok = QInputDialog.getText(
+            self, "Standardize Data", "Enter columns to standardize (Comma-Separated): "
+        )
+
+        if ok:
+            stand_cols_qt = stand_cols_qt.split(",") if stand_cols_qt else None
+            stand_cols_qt = [cols.strip() for cols in stand_cols_qt]
+            self.handler.standardize_data(columns=stand_cols_qt)
+            self.display_text.append("Data Standardized")
+            self.disp_sele_var()
+
+    def encode_categorical_data(self):
+        columns, ok = QInputDialog.getText(
+            self, "Encode Categorical Data", "Enter columns to encode (Comma-Separated): "
+        )
+
+        if ok:
+            columns = columns.split(",") if columns else None
+            columns = [cols.strip() for cols in columns]
+            self.handler.encode_cat_variables(columns=columns)
+            self.display_text.append("Categorical Data Encoded")
+            self.disp_sele_var()
+
+    def remove_outliers(self):
+        z_thresh, ok = QInputDialog.getDouble(
+            self, "Remove Outliers", "Enter Z-Threshold for outliers: ", 3.0, 0.1, 10.0, 1
+        )
+
+        if ok:
+            self.handler.remove_outliers(z_thresh=z_thresh)
+            self.display_text.append("Outliers Removed")
+            self.disp_sele_var()
 
     def load_stylesheet(self, file_name):
         try:

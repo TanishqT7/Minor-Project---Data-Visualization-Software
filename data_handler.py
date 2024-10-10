@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
+
 class DataHandler():
     def __init__(self):
         self.main_data = None
@@ -92,10 +93,23 @@ class DataHandler():
             raise ValueError("No independent variables set.")
 
         selected_vars = [self.dependent_variable] + self.independent_variable
+
+        if not all(var in self.main_data.columns for var in selected_vars):
+            raise ValueError(
+                "One or more selected variables are not valid names")
+
         self.usable_data = self.main_data[selected_vars].copy()
+
+        if self.usable_data.empty:
+            raise ValueError(
+                "Usable data became empty after selecting variables")
+
         print(self.usable_data.head(5))
 
     def handle_missing_values(self, strat="drop", fill_value=None):
+
+        if self.usable_data is None:
+            raise ValueError("No usable data found to clean missing values.")
 
         if strat == "drop":
             self.usable_data.dropna(inplace=True)
@@ -103,16 +117,31 @@ class DataHandler():
             if fill_value == "mean":
                 self.usable_data.fillna(self.usable_data.mean(), inplace=True)
             elif fill_value == "median":
-                self.usable_data.fillna(self.usable_data.median(), inplace=True)
+                self.usable_data.fillna(
+                    self.usable_data.median(), inplace=True)
             else:
                 self.usable_data.fillna(fill_value, inplace=True)
         else:
-            raise ValueError("Unsupported missing data Strategy. Use \"Fill\" or \"Drop\".")
-        
+            raise ValueError(
+                "Unsupported missing data Strategy. Use \"Fill\" or \"Drop\".")
+
+        if self.usable_data.empty:
+            raise ValueError(
+                "Usable data became empty after handling missing values.")
+
     def remove_duplicates(self):
+        if self.usable_data is None:
+            raise ValueError("No usable data to remove duplicates")
         self.usable_data.drop_duplicates(inplace=True)
 
+        if self.usable_data.empty:
+            raise ValueError(
+                "Usable data became empty after removing duplicates")
+
     def normalize_data(self, columns=None):
+
+        if self.usable_data is None:
+            raise ValueError("No usable data to normalize")
 
         scaler = MinMaxScaler()
         if columns is None:
@@ -122,27 +151,51 @@ class DataHandler():
         else:
             norm_cols = columns
         scaled_data = scaler.fit_transform(self.usable_data[norm_cols])
-        self.usable_data[norm_cols] = pd.DataFrame(scaled_data, columns=norm_cols, index=self.usable_data.index)
+        self.usable_data[norm_cols] = pd.DataFrame(
+            scaled_data, columns=norm_cols, index=self.usable_data.index)
+
+        if self.usable_data.empty:
+            raise ValueError(
+                "Usable data became empty after normalizing data")
 
     def standardize_data(self, columns=None):
 
+        if self.usable_data is None:
+            raise ValueError("No usable data to standardize")
+
         scaler = StandardScaler()
         if columns is None:
-            stand_cols = self.usable_data[self.usable_data.select_dtypes(include=["float64", "int64"]).columns]
+            stand_cols = self.usable_data[self.usable_data.select_dtypes(
+                include=["float64", "int64"]).columns]
 
         else:
             stand_cols = columns
-        scaled_data = scaler.fit_transform(self.usable_data[stand_cols])
-        self.usable_data[stand_cols] = pd.DataFrame(scaled_data, columns=stand_cols, index=self.usable_data.index)
+            scaled_data = scaler.fit_transform(self.usable_data[stand_cols])
+            self.usable_data[stand_cols] = pd.DataFrame(
+                scaled_data, columns=stand_cols, index=self.usable_data.index)
+
+        if self.usable_data.empty:
+            raise ValueError(
+                "Usable data became empty after standardizing data")
 
     def encode_cat_variables(self, columns=None):
 
+        if self.usable_data is None:
+            raise ValueError("No usable data to encode categorical variables")
+
         self.usable_data = pd.get_dummies(self.usable_data, columns=columns)
+
+        if self.usable_data.empty:
+            raise ValueError(
+                "Usable data became empty after encoding categorical variables")
 
     def remove_outliers(self, z_thresh=3):
 
+        if self.usable_data is None:
+            raise ValueError("No usable data to remove outliers")
+
         from scipy import stats
-        
+
         num_cols = self.usable_data.select_dtypes(include=["float64", "int64"])
         z_score = stats.zscore(num_cols)
         abs_z_score = abs(z_score)
@@ -150,6 +203,10 @@ class DataHandler():
         filtered_entries = (abs_z_score < z_thresh).all(axis=1)
 
         self.usable_data = self.usable_data[filtered_entries]
+
+        if self.usable_data.empty:
+            raise ValueError(
+                "Usable data became empty after removing outliers.")
 
     def display_usable_data(self):
         print(self.usable_data.head())
