@@ -23,7 +23,7 @@ class App(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Data Visualization Tool")
-        self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 1280, 720)
 
         self.handler = DataHandler()
 
@@ -74,7 +74,7 @@ class App(QMainWindow):
         file_path = self.file_path_input.text()
 
         try:
-            self.data = self.handler.load_file(file_path)
+            self.main_data_qt = self.handler.load_file(file_path)
             self.display_text.append("Data Loaded Successfully!")
             self.display_columns()
 
@@ -121,20 +121,32 @@ class App(QMainWindow):
 
         try:
 
-            selec_data = self.data[selec_var]
+            self.usable_data_qt = self.handler.usable_data[selec_var]
 
-            self.table_widget.setRowCount(len(selec_data))
+            print("Selected Variables: ", selec_var)
+            print("data Preview: \n", self.usable_data_qt.head())
+
+            self.table_widget.clearContents()
+
+            self.table_widget.setRowCount(len(self.usable_data_qt))
             self.table_widget.setColumnCount(len(selec_var))
             self.table_widget.setHorizontalHeaderLabels(selec_var)
 
-            for r_idx, r_data in selec_data.iterrows():
+            for r_idx, r_data in self.usable_data_qt.iterrows():
                 for c_idx, c_data in enumerate(selec_var):
                     self.table_widget.setItem(
                         r_idx, c_idx, QTableWidgetItem(str(r_data[c_data])))
 
+            self.table_widget.viewport().update()
+
         except KeyError as e:
             QMessageBox.critical(
                 self, "Error", f"Error Displaying selected variables: {e}")
+
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Error", f"Error Displaying selected variables: {e}")
+            print(f"Error Refreshing Table: {e}")
 
     def data_cleaning_options(self):
         options = [
@@ -184,6 +196,7 @@ class App(QMainWindow):
                 self.handler.handle_missing_values(strat="drop")
                 self.display_text.append("Dropped missing values")
 
+            print(self.handler.usable_data.head())
             self.disp_sele_var()
 
     def remove_duplicates(self):
