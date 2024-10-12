@@ -89,9 +89,11 @@ def main():
                                         if fill_value in ['mean', 'median']:
                                             handler.handle_missing_values(
                                                 strat="fill", fill_value=fill_value)
+                                            break
                                         else:
                                             handler.handle_missing_values(
                                                 strat="fill", fill_value=float(fill_value))
+                                            break
                                     else:
                                         handler.handle_missing_values(strat="drop")
                                         print("Dropped the missing values!")
@@ -187,14 +189,8 @@ def main():
                     elif option == 7:
                         while True:
                             try:
-                                disp_rows = int(
-                                    input("Enter the number of rows to display: "))
-                                if disp_rows == "exit":
-                                    print("Exited Displaying Data!")
-                                    break
-                                else:
-                                    handler.display_usable_data()
-                                    break
+                                handler.display_usable_data()
+                                break
                             except ValueError as e:
                                 print(f"Invalid number of Rows: {e}")
                             except Exception as e:

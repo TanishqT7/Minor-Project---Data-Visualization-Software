@@ -182,8 +182,22 @@ class DataHandler():
 
         if self.usable_data is None:
             raise ValueError("No usable data to encode categorical variables")
+        
+        if columns is None:
+            cat_cols = self.usable_data.select_dtypes(include=['object']).columns
+        else:
+            cat_cols = columns
+
+        if not all(col in self.usable_data.columns for col in cat_cols):
+            raise ValueError("One or more selected columns are not in the data.")
+        
+        original_cols = list(self.usable_data.columns)
 
         self.usable_data = pd.get_dummies(self.usable_data, columns=columns)
+
+        new_cols = list(self.usable_data.columns)
+
+        self.new_cols = new_cols 
 
         if self.usable_data.empty:
             raise ValueError(

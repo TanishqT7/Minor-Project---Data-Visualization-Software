@@ -121,23 +121,44 @@ class App(QMainWindow):
 
         try:
 
-            self.usable_data_qt = self.handler.usable_data[selec_var]
+            updated_vars = []
 
-            print("Selected Variables: ", selec_var)
+            for var in selec_var:
+                if var in self.handler.usable_data.columns:
+                    updated_vars.append(var)
+                else:
+                    dummy_vars = [col for col in self.handler.usable_data.columns if col.startswith(var + "_")]
+                    updated_vars.extend(dummy_vars)
+
+            self.usable_data_qt = self.handler.usable_data[updated_vars]
+
+            print("Selected Variables: ", updated_vars)
             print("data Preview: \n", self.usable_data_qt.head())
 
             self.table_widget.clearContents()
+            self.table_widget.setRowCount(0)
 
             self.table_widget.setRowCount(len(self.usable_data_qt))
-            self.table_widget.setColumnCount(len(selec_var))
-            self.table_widget.setHorizontalHeaderLabels(selec_var)
+            self.table_widget.setColumnCount(len(updated_vars))
+            self.table_widget.setHorizontalHeaderLabels(updated_vars)
 
             for r_idx, r_data in self.usable_data_qt.iterrows():
-                for c_idx, c_data in enumerate(selec_var):
+                for c_idx, c_data in enumerate(updated_vars):
                     self.table_widget.setItem(
                         r_idx, c_idx, QTableWidgetItem(str(r_data[c_data])))
 
             self.table_widget.viewport().update()
+
+            row_count = self.table_widget.rowCount()
+            for row_idx in range(row_count - 1, -1, -1):
+                empty = True
+                for col_idx in range(self.table_widget.columnCount()):
+                    item = self.table_widget.item(row_idx, col_idx)
+                    if item and item.text().strip():
+                        empty = False
+                        break
+                if empty:
+                    self.table_widget.removeRow(row_idx)
 
         except KeyError as e:
             QMessageBox.critical(
