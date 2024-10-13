@@ -262,40 +262,136 @@ class App(QMainWindow):
 
     def normalize_data(self):
 
-        norm_cols_qt, ok = QInputDialog.getText(
-            self, "Normalize Data", "Enter columns to normalize (Comma-Separated): "
-        )
+        try:
+            numeric_columns = self.handler.get_numerical_columns()
 
-        if ok:
-            norm_cols_qt = norm_cols_qt.split(",") if norm_cols_qt else None
-            norm_cols_qt = [cols.strip() for cols in norm_cols_qt]
-            self.handler.normalize_data(columns=norm_cols_qt)
-            self.display_text.append("Data Normalized")
-            self.disp_sele_var()
+            dep_var = self.handler.get_dependent_variable()
+            if dep_var in numeric_columns:
+                numeric_columns.remove(dep_var)
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Select Columns to Normalize")
+            layout = QVBoxLayout()
+
+            label = QLabel("Select Columns to Normalize: ")
+            layout.addWidget(label)
+
+            columns_list = QListWidget(dialog)
+            columns_list.setSelectionMode(QAbstractItemView.MultiSelection)
+            for col in numeric_columns:
+                item = QListWidgetItem(col)
+                columns_list.addItem(item)
+            layout.addWidget(columns_list)
+
+            button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            button_box.accepted.connect(dialog.accept)
+            button_box.rejected.connect(dialog.reject)
+            layout.addWidget(button_box)
+
+            dialog.setLayout(layout)
+
+            if dialog.exec_() == QDialog.Accepted:
+                selected_columns = [item.text() for item in columns_list.selectedItems()]
+
+                if not selected_columns:
+                    selected_columns = None
+
+                self.handler.normalize_data(columns=selected_columns)
+                self.display_text.append("Data Normalized")
+                self.disp_sele_var()
+
+        except ValueError as e:
+            QMessageBox.critical(self, "Error", str(e))
 
     def standardize_data(self):
-        stand_cols_qt, ok = QInputDialog.getText(
-            self, "Standardize Data", "Enter columns to standardize (Comma-Separated): "
-        )
+        
+        try:
+            numeric_columns = self.handler.get_numerical_columns()
 
-        if ok:
-            stand_cols_qt = stand_cols_qt.split(",") if stand_cols_qt else None
-            stand_cols_qt = [cols.strip() for cols in stand_cols_qt]
-            self.handler.standardize_data(columns=stand_cols_qt)
-            self.display_text.append("Data Standardized")
-            self.disp_sele_var()
+            dep_var = self.handler.get_dependent_variable()
+            if dep_var in numeric_columns:
+                numeric_columns.remove(dep_var)
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Select Columns to Standardize")
+            layout = QVBoxLayout()
+
+            label = QLabel("Select Columns to Standardize: ")
+            layout.addWidget(label)
+
+            columns_list = QListWidget(dialog)
+            columns_list.setSelectionMode(QAbstractItemView.MultiSelection)
+            for col in numeric_columns:
+                item = QListWidgetItem(col)
+                columns_list.addItem(item)
+            layout.addWidget(columns_list)
+
+            button_box = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            button_box.accepted.connect(dialog.accept)
+            button_box.rejected.connect(dialog.reject)
+            layout.addWidget(button_box)
+
+            dialog.setLayout(layout)
+
+            if dialog.exec_() == QDialog.Accepted:
+                selected_columns = [item.text()
+                                    for item in columns_list.selectedItems()]
+
+                if not selected_columns:
+                    selected_columns = None
+
+                self.handler.standardize_data(columns=selected_columns)
+                self.display_text.append("Data Standardized")
+                self.disp_sele_var()
+
+        except ValueError as e:
+            QMessageBox.critical(self, "Error", str(e))
 
     def encode_categorical_data(self):
-        columns, ok = QInputDialog.getText(
-            self, "Encode Categorical Data", "Enter columns to encode (Comma-Separated): "
-        )
 
-        if ok:
-            columns = columns.split(",") if columns else None
-            columns = [cols.strip() for cols in columns]
-            self.handler.encode_cat_variables(columns=columns)
-            self.display_text.append("Categorical Data Encoded")
-            self.disp_sele_var()
+        try:
+            cat_columns = self.handler.get_categorical_columns()
+
+            dep_var = self.handler.get_dependent_variable()
+            if dep_var in cat_columns:
+                cat_columns.remove(dep_var)
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Select Categorical Variables to Encode")
+            layout = QVBoxLayout()
+
+            label = QLabel("Select Columns to Encode: ")
+            layout.addWidget(label)
+
+            columns_list = QListWidget(dialog)
+            columns_list.setSelectionMode(QAbstractItemView.MultiSelection)
+            for col in cat_columns:
+                item = QListWidgetItem(col)
+                columns_list.addItem(item)
+            layout.addWidget(columns_list)
+
+            button_box = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            button_box.accepted.connect(dialog.accept)
+            button_box.rejected.connect(dialog.reject)
+            layout.addWidget(button_box)
+
+            dialog.setLayout(layout)
+
+            if dialog.exec_() == QDialog.Accepted:
+                selected_columns = [item.text()
+                                    for item in columns_list.selectedItems()]
+
+                if not selected_columns:
+                    selected_columns = None
+
+                self.handler.encode_cat_variables(columns=selected_columns)
+                self.display_text.append("Categorical Data Encoded")
+                self.disp_sele_var()
+
+        except ValueError as e:
+            QMessageBox.critical(self, "Error", str(e))
 
     def remove_outliers(self):
         z_thresh, ok = QInputDialog.getDouble(

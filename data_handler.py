@@ -109,6 +109,23 @@ class DataHandler():
 
         print(self.usable_data.head(5))
 
+    def get_usable_columns(self):
+        if self.usable_data is not None:
+            return list(self.usable_data.columns)
+        else:
+            raise ValueError("No usable data loaded.")
+
+    def get_numerical_columns(self):
+        numeric_columns = self.usable_data.select_dtypes(include=['number']).columns.tolist()
+        return numeric_columns
+    
+    def get_categorical_columns(self):
+        categorical_columns = self.usable_data.select_dtypes(include=['object', 'category']).columns.tolist()
+        return categorical_columns
+
+    def get_dependent_variable(self):
+        return self.dependent_variable
+    
     def handle_missing_values(self, strat="drop", fill_value=None):
 
         if self.usable_data is None:
