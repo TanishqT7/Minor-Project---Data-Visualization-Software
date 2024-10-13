@@ -67,9 +67,10 @@ class DataHandler():
 
         print(f"{var} is the dependent variable.")
 
-    def set_independent_variable(self, vars: str):
-
-        vars = vars.split(',') if "," in vars else [vars]
+    def set_independent_variable(self, vars):
+        
+        if isinstance(vars, str):
+            vars = vars.split(',') if "," in vars else [vars]
 
         vars = [var.strip() for var in vars]
 
@@ -93,12 +94,14 @@ class DataHandler():
             raise ValueError("No independent variables set.")
 
         selected_vars = [self.dependent_variable] + self.independent_variable
+        print(f"Selected Variables: {selected_vars}")
 
         if not all(var in self.main_data.columns for var in selected_vars):
             raise ValueError(
                 "One or more selected variables are not valid names")
 
         self.usable_data = self.main_data[selected_vars].copy()
+        print(self.usable_data.head(5))
 
         if self.usable_data.empty:
             raise ValueError(

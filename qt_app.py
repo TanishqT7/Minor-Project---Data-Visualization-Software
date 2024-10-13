@@ -15,6 +15,10 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     QDialog,
     QFormLayout,
+    QListWidget,
+    QListWidgetItem,
+    QDialogButtonBox,
+    QAbstractItemView,
 )
 from data_handler import DataHandler
 
@@ -45,15 +49,7 @@ class App(QMainWindow):
         self.display_text = QTextEdit(self)
         layout.addWidget(self.display_text)
 
-        self.dep_var_inp = QLineEdit(self)
-        self.dep_var_inp.setPlaceholderText("Dependent Variable")
-        layout.addWidget(self.dep_var_inp)
-
-        self.indep_var_inp = QLineEdit(self)
-        self.indep_var_inp.setPlaceholderText("Independent Variable")
-        layout.addWidget(self.indep_var_inp)
-
-        self.sub_vars_button = QPushButton("Submit Variables", self)
+        self.sub_vars_button = QPushButton("Select Dependent and Independent Variables", self)
         self.sub_vars_button.clicked.connect(self.submit_variables)
         layout.addWidget(self.sub_vars_button)
 
@@ -93,19 +89,57 @@ class App(QMainWindow):
     def submit_variables(self):
 
         try:
+            columns = self.handler.get_columns()
 
-            dep_vars = self.dep_var_inp.text()
-            indep_vars = self.indep_var_inp.text()
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Select Dependent and Independent Variables")
+            layout = QVBoxLayout()
 
-            self.handler.set_dependent_variable(dep_vars)
-            self.handler.set_independent_variable(indep_vars)
+            dep_label = QLabel("Select Dependent Variables: ")
+            layout.addWidget(dep_label)
+            dep_combo = QComboBox(dialog)
+            dep_combo.addItems(columns)
+            layout.addWidget(dep_combo)
 
-            self.handler.disp_sel_var()
+            indep_label = QLabel("Select Independent Variables: ")
+            layout.addWidget(indep_label)
+            indep_list = QListWidget(dialog)
+            indep_list.setSelectionMode(QAbstractItemView.MultiSelection)
+            for col in columns:
+                item = QListWidgetItem(col)
+                indep_list.addItem(item)
+            layout.addWidget(indep_list)
 
-            self.display_text.append(f"Dependent variable: {dep_vars}")
-            self.display_text.append(f"Independent variables: {indep_vars}")
+            button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            button_box.accepted.connect(dialog.accept)
+            button_box.rejected.connect(dialog.reject)
+            layout.addWidget(button_box)
 
-            self.disp_sele_var()
+            dialog.setLayout(layout)
+
+            if dialog.exec_() == QDialog.Accepted:
+
+                dep_var = dep_combo.currentText()
+
+                indep_vars = [item.text() for item in indep_list.selectedItems()]
+
+                if not indep_vars:
+                    QMessageBox.critical(self, "Error", "Please select at least one independent variable")
+                    return
+                
+                self.handler.set_dependent_variable(dep_var)
+                self.handler.set_independent_variable(indep_vars)
+
+                self.handler.disp_sel_var()
+
+                if self.handler.usable_data is None or self.handler.usable_data.empty:
+                    self.display_text.append("Data is empty or None")
+                    return  
+
+                self.display_text.append(f"Dependent Variable: {dep_var}")
+                self.display_text.append(f"Independent Variables: {indep_vars}")
+
+                self.disp_sele_var()
 
         except ValueError as e:
             QMessageBox.critical(self, "Error", str(e))
@@ -115,6 +149,7 @@ class App(QMainWindow):
         if self.handler.usable_data is None or self.handler.usable_data.empty:
             QMessageBox.critical(self, "Error", "Usable Data is empty or None")
             return
+        print(f"Avalaible Variables: {self.handler.usable_data.columns}")
 
         selec_var = [self.handler.dependent_variable] + \
             self.handler.independent_variable
