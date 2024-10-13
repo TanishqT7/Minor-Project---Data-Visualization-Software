@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
     QListWidgetItem,
     QDialogButtonBox,
     QAbstractItemView,
+    QFileDialog,
 )
 from data_handler import DataHandler
 
@@ -37,10 +38,6 @@ class App(QMainWindow):
 
     def initUI(self):
         layout = QVBoxLayout()
-
-        self.file_path_input = QLineEdit(self)
-        self.file_path_input.setPlaceholderText("Enter file path")
-        layout.addWidget(self.file_path_input)
 
         self.load_button = QPushButton("Load File", self)
         self.load_button.clicked.connect(self.load_file)
@@ -67,12 +64,16 @@ class App(QMainWindow):
 
     def load_file(self):
 
-        file_path = self.file_path_input.text()
-
         try:
-            self.main_data_qt = self.handler.load_file(file_path)
-            self.display_text.append("Data Loaded Successfully!")
-            self.display_columns()
+            options = QFileDialog.Options()
+            file_name, _ = QFileDialog.getOpenFileName(
+                self, "Open CSV/XLSX File", "", "CSV Files (*.csv);; XLSX Files (*.xlsx);; All Files (*)", options=options
+            )
+
+            if file_name:
+                self.handler.load_file(file_name)
+                self.display_text.append(f"File Loaded from: {file_name}")
+                self.display_columns()
 
         except ValueError as e:
             QMessageBox.critical(self, "Error", str(e))
