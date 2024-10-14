@@ -1,5 +1,5 @@
 from data_handler import DataHandler
-
+from visualization import plot_scatter, plot_histogram, plot_boxplot
 
 def main():
 
@@ -209,9 +209,55 @@ def main():
                 except Exception as e:
                     print(f"Unexpected error: {e}")
 
+
+            while True:
+                try:
+                    print("\nData Visualization Options:")
+                    print("1. Scatter Plot")
+                    print("2. Histogram")
+                    print("3. Box Plot")
+                    print("4. Exit")
+
+                    plot_option = int(input("Enter your choice: "))
+
+                    if plot_option == 1:
+                        x_col = input("Enter the name of the x-axis column: ")
+                        y_col = input("Enter the name of the y-axis column: ")
+                        hue = input(
+                            "Enter the name of the hue column (or press enter for no hue): ")
+                        title = input("Enter the title of the plot: ")
+
+                        hue = hue if hue.strip() else None
+
+                        plot_scatter(data=handler.usable_data, x_col=x_col, y_col=y_col, hue=hue, title=title)
+
+                    elif plot_option == 2:
+                        columns = input("Enter the column to plot: ")
+                        bins = int(input("Enter the number of bins: ") or 10)
+                        plot_histogram(data=handler.usable_data, columns=columns, bins=bins)
+
+                    elif plot_option == 3:
+                        x_col = input("Enter the name of the column to plot: ")
+                        y_col = input("Enter the name of the y-axis column: ")
+                        
+                        y_col = y_col if y_col.strip() else None
+
+                        plot_boxplot(data=handler.usable_data, x_col=x_col, y_col=y_col)
+
+                    elif plot_option == 4:
+                        print("Exiting Data Visualization steps.")
+                        break
+
+                    else:
+                        print("Invalid option. Please try again.")
+
+                except ValueError as e:
+                    print(f"Invalid input: {e}")
+                except Exception as e:
+                    print(f"Unexpected error: {e}")
+
         except Exception as e:
             print(f"Unexpected Error: {e}")
-
 
 if __name__ == "__main__":
     main()
