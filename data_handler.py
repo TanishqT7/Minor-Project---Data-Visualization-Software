@@ -212,11 +212,13 @@ class DataHandler():
             raise ValueError("One or more selected columns are not in the data.")
         
         original_cols = list(self.usable_data.columns)
+        print(f"Original Columns: {original_cols}")
 
         self.usable_data = pd.get_dummies(self.usable_data, columns=columns)
 
         new_cols = list(self.usable_data.columns)
-
+        print(f"New Columns: {new_cols}")
+        
         self.new_cols = new_cols 
 
         if self.usable_data.empty:
