@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QFileDialog,
 )
-from data.data_handler import DataHandler
+from data_handler import DataHandler
 
 
 class App(QMainWindow):

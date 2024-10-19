@@ -1,6 +1,6 @@
-from data.data_handler import DataHandler
-import data.data_clean_n_trans as dct
-import analysis.visual_opts as vo
+from data_handler import DataHandler
+import data_clean_n_trans as dct
+import visual_opts as vo
 
 def main():
 
