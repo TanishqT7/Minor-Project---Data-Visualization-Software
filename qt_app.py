@@ -1,4 +1,5 @@
 import sys
+import visualization as vz
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -53,6 +54,10 @@ class App(QMainWindow):
         self.clean_button = QPushButton("Data Cleaning Options", self)
         self.clean_button.clicked.connect(self.data_cleaning_options)
         layout.addWidget(self.clean_button)
+
+        self.visualize_button = QPushButton("Visualize Data", self)
+        self.visualize_button.clicked.connect(self.visualize_data)
+        layout.addWidget(self.visualize_button)
 
         self.table_widget = QTableWidget(self)
         layout.addWidget(self.table_widget)
@@ -204,6 +209,18 @@ class App(QMainWindow):
             QMessageBox.critical(
                 self, "Error", f"Error Displaying selected variables: {e}")
             print(f"Error Refreshing Table: {e}")
+
+    def get_encoded_variables(self, dep_var, indep_var):
+        if dep_var in self.handler.cat_cols:
+            dep_var = self.get_encoded_column(dep_var)
+        if indep_var in self.handler.cat_cols:
+            indep_var = self.get_encoded_column(indep_var)
+
+        return dep_var, indep_var
+    
+    def get_encoded_column(self, col):
+        encoded_cols = [c for c in self.handler.usable_data.columns if c.startswith(col + "_")]
+        return encoded_cols[0] if encoded_cols else None
 
     def data_cleaning_options(self):
         options = [
@@ -403,6 +420,70 @@ class App(QMainWindow):
             self.handler.remove_outliers(z_thresh=z_thresh)
             self.display_text.append("Outliers Removed")
             self.disp_sele_var()
+
+    def visualize_data(self):
+        try:
+
+            columns = self.handler.get_columns()
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Select Visualization Options")
+            layout = QVBoxLayout()
+
+            dep_label = QLabel("Select Dependent Variable: ")
+            layout.addWidget(dep_label)
+            dep_combo = QComboBox(dialog)
+            dep_combo.addItems(columns)
+            layout.addWidget(dep_combo)
+
+            indep_label = QLabel("Select Independent Variable: ")
+            layout.addWidget(indep_label)
+            indep_combo = QComboBox(dialog)
+            indep_combo.addItems(columns)
+            layout.addWidget(indep_combo)
+
+            graph_label = QLabel("Select Graph Type: ")
+            layout.addWidget(graph_label)
+            graph_type_combo = QComboBox(dialog)
+            graph_type_combo.addItems(["Bar Graph", "Histogram", "Box Plot", "Scatter Plot", "Count Plot", "Pie Chart", "Pair Plot", "Heatmap"])
+            layout.addWidget(graph_type_combo)
+
+            button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            button_box.accepted.connect(dialog.accept)
+            button_box.rejected.connect(dialog.reject)
+            layout.addWidget(button_box)
+
+            dialog.setLayout(layout)
+
+            if dialog.exec_() == QDialog.Accepted:
+                dep_var = dep_combo.currentText()
+                indep_var = indep_combo.currentText()
+                graph_type = graph_type_combo.currentText()
+
+                if self.handler.is_encoded:
+                    dep_var, indep_var = self.get_encoded_vars(dep_var, indep_var)
+
+                if graph_type == "Bar Graph":
+                    vz.plot_barplot(data=self.handler.usable_data, column=indep_var)
+                elif graph_type == "Histogram":
+                    vz.plot_histogram(data=self.handler.usable_data, columns=indep_var)
+                elif graph_type == "Box Plot":
+                    vz.plot_boxplot(data=self.handler.usable_data, x_col=indep_var, y_col=dep_var)
+                elif graph_type == "Scatter Plot":
+                    vz.plot_scatter(self.handler.usable_data, x_col=indep_var, y_col=dep_var)
+                elif graph_type == "Count Plot":
+                    vz.plot_count(self.handler.usable_data, column=indep_var)
+                elif graph_type == "Pie Chart":
+                    vz.plot_piechart(self.handler.usable_data, column=indep_var)
+                elif graph_type == "Pair Plot":
+                    vz.plot_pair(self.handler.usable_data)
+                elif graph_type == "Heatmap":
+                    vz.plot_heatmap(self.handler.usable_data)
+                else:
+                    raise ValueError("Invalid graph type")
+                
+        except ValueError as e:
+            QMessageBox.critical(self, "Error", str(e))
 
     def load_stylesheet(self, file_name):
         try:
