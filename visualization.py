@@ -36,13 +36,10 @@ def plot_boxplot(data:pd.DataFrame, x_col: str, y_col: str=None, title: str=None
     plt.grid(True)
     plt.show()
 
-def plot_count(data:pd.DataFrame, column: str, title: str = None):
+def plot_count(data:pd.DataFrame, column: str):
     plt.figure(figsize=(8,6))
     sns.countplot(data=data, x=column)
-    plt.title(title or f"Count Plot of {column}")
-    plt.xlabel(column)
-    plt.ylabel('Count')
-    plt.grid(True)
+    plt.title(f"Count Plot of {column}")
     plt.show()
 
 def plot_pair(data:pd.DataFrame, hue:str = None):
@@ -63,4 +60,17 @@ def plot_violin(data: pd.DataFrame, x_col: str, y_col:str):
     plt.xlabel(x_col)
     plt.ylabel(y_col)
     plt.grid(True)
+    plt.show()
+
+def plot_barplot(data: pd.DataFrame, column:str):
+    plt.figure(figsize=(8,6))
+    data[column].value_counts().plot(kind='bar')
+    plt.title(f"Bar Plot of {column}")
+    plt.show()
+
+def plot_piechart(data: pd.DataFrame, column:str):
+    plt.figure(figsize=(8,6))
+    data[column].value_counts().plot.pie(autopct='%1.1f%%', startangle=90)
+    plt.title(f"Pie Chart of {column}")
+    plt.ylabel('')
     plt.show()

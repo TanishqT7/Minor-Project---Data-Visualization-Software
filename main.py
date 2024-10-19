@@ -115,10 +115,11 @@ def main():
                     print("1. Univariate Analysis")
                     print("2. Bivariate Analysis")
                     print("3. Multivariate Analysis")
-                    print("4. Exit Visualization")
+                    print("4. Categorical Variables Analysis")
+                    print("5. Exit Visualization")
 
                     analysis_type = int(
-                        input("Choose the type of analysis (1-4): "))
+                        input("Choose the type of analysis (1-5): "))
 
                     if analysis_type == 1:
                         vo.univariate_analysis(handler)
@@ -130,6 +131,9 @@ def main():
                         vo.multivariate_analysis(handler)
 
                     elif analysis_type == 4:
+                        vo.categorical_analysis(handler)
+
+                    elif analysis_type == 5:
                         print("Exiting Visualization")
                         break
 

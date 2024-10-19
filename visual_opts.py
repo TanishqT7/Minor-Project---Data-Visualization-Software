@@ -90,3 +90,59 @@ def multivariate_analysis(handler):
 
         else:
             print("Invalid option. Please try again.")
+
+def categorical_analysis(handler):
+    while True:
+
+        if handler.is_encoded:
+            print("Categorical Variables have been encoded")
+            print("\nCategorical Analysis Options:")
+            print("1. Bar Plot for Encoded Variables")
+            print('2. Heatmap for Encoded Variables')
+            print("3. Back to main Visualization Menu")
+
+            choice = int(input("Enter you choice (1-3): "))
+
+            if choice == 1:
+                columns = [col for col in handler.new_cols if col]
+                print(f"Encoded Columns: {columns}")
+                col = input("Enter the name of encoded column: ")
+                vs.plot_barplot(data=handler.usable_data, column=col)
+
+            elif choice == 2:
+                vs.plot_heatmap(data=handler.usable_data)
+
+            elif choice == 3:
+                print("Returning to main visualization menu.")
+                break
+
+            else:
+                print("Invalid option. Please try again.")
+        
+        else:
+            print("Categorical Variables are not encoded")
+            print("\nCategorical Analysis Options:")
+            print("1. Count Plot for Encoded Variables")
+            print('2. Pie Chart for Encoded Variables')
+            print("3. Back to main Visualization Menu")
+
+            choice = int(input("Enter you choice (1-3): "))
+
+            if choice == 1:
+                columns = handler.get_categorical_columns()
+                print(f"Categorical Columns: {columns}")
+                col = input("Enter the name of categorical column: ")
+                vs.plot_count(data=handler.usable_data, column=col)
+
+            elif choice == 2:
+                columns = handler.get_categorical_columns()
+                print(f"Categorical Columns: {columns}")
+                col = input("Enter the name of categorical column: ")
+                vs.plot_piechart(data=handler.usable_data, column=col)
+
+            elif choice == 3:
+                print("Returning to main visualization menu.")
+                break
+
+            else:
+                print("Invalid option. Please try again.")
