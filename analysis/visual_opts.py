@@ -1,4 +1,4 @@
-import visualization as vs
+import analysis.visualization as vs
 
 def univariate_analysis(handler):
     while True:
