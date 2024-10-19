@@ -9,6 +9,7 @@ class DataHandler():
         self.file_type = None
         self.dependent_variable = None
         self.independent_variable = []
+        self.is_encoded = False
 
     def load_file(self, file_path: str):
 
@@ -120,6 +121,8 @@ class DataHandler():
         return numeric_columns
     
     def get_categorical_columns(self):
+        if self.is_encoded:
+            categorical_columns = self
         categorical_columns = self.usable_data.select_dtypes(include=['object', 'category']).columns.tolist()
         return categorical_columns
 
@@ -207,17 +210,22 @@ class DataHandler():
             cat_cols = self.usable_data.select_dtypes(include=['object']).columns
         else:
             cat_cols = columns
-
+        self.cat_cols = cat_cols
+        
         if not all(col in self.usable_data.columns for col in cat_cols):
             raise ValueError("One or more selected columns are not in the data.")
         
         original_cols = list(self.usable_data.columns)
+        print(f"Original Columns: {original_cols}")
 
         self.usable_data = pd.get_dummies(self.usable_data, columns=columns)
 
         new_cols = list(self.usable_data.columns)
-
+        print(f"New Columns: {new_cols}")
+        
         self.new_cols = new_cols 
+
+        self.is_encoded = True
 
         if self.usable_data.empty:
             raise ValueError(
