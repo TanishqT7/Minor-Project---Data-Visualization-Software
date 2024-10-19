@@ -430,18 +430,6 @@ class App(QMainWindow):
             dialog.setWindowTitle("Select Visualization Options")
             layout = QVBoxLayout()
 
-            dep_label = QLabel("Select Dependent Variable: ")
-            layout.addWidget(dep_label)
-            dep_combo = QComboBox(dialog)
-            dep_combo.addItems(columns)
-            layout.addWidget(dep_combo)
-
-            indep_label = QLabel("Select Independent Variable: ")
-            layout.addWidget(indep_label)
-            indep_combo = QComboBox(dialog)
-            indep_combo.addItems(columns)
-            layout.addWidget(indep_combo)
-
             graph_label = QLabel("Select Graph Type: ")
             layout.addWidget(graph_label)
             graph_type_combo = QComboBox(dialog)
@@ -456,32 +444,80 @@ class App(QMainWindow):
             dialog.setLayout(layout)
 
             if dialog.exec_() == QDialog.Accepted:
-                dep_var = dep_combo.currentText()
-                indep_var = indep_combo.currentText()
                 graph_type = graph_type_combo.currentText()
 
-                if self.handler.is_encoded:
-                    dep_var, indep_var = self.get_encoded_vars(dep_var, indep_var)
+                numeric_columns = self.handler.get_numerical_columns()
+                cat_columns = self.handler.get_categorical_columns()
 
-                if graph_type == "Bar Graph":
-                    vz.plot_barplot(data=self.handler.usable_data, column=indep_var)
-                elif graph_type == "Histogram":
-                    vz.plot_histogram(data=self.handler.usable_data, columns=indep_var)
-                elif graph_type == "Box Plot":
-                    vz.plot_boxplot(data=self.handler.usable_data, x_col=indep_var, y_col=dep_var)
-                elif graph_type == "Scatter Plot":
-                    vz.plot_scatter(self.handler.usable_data, x_col=indep_var, y_col=dep_var)
-                elif graph_type == "Count Plot":
-                    vz.plot_count(self.handler.usable_data, column=indep_var)
-                elif graph_type == "Pie Chart":
-                    vz.plot_piechart(self.handler.usable_data, column=indep_var)
-                elif graph_type == "Pair Plot":
-                    vz.plot_pair(self.handler.usable_data)
-                elif graph_type == "Heatmap":
-                    vz.plot_heatmap(self.handler.usable_data)
-                else:
-                    raise ValueError("Invalid graph type")
+                valid_columns = []
+                if graph_type in ["Bar Graph", "Count Plot", "Pie Chart"]:
+                    valid_columns = cat_columns
+                if graph_type in ["Histogram", "Box Plot", "Scatter Plot"]:
+                    valid_columns = numeric_columns
+                if graph_type in ["Pair Plot", "Heatmap"]:
+                    valid_columns = numeric_columns + cat_columns
+
+                if not valid_columns:
+                    QMessageBox.critical(
+                        self, "Error", f"No valid columns found for {graph_type}"
+                    )
+                    return
                 
+                if graph_type in ["Pair Plot", "Heatmap"]:
+
+                    if graph_type == "Pair Plot":
+                        vz.plot_pair(data=self.handler.usable_data)
+                        return
+                    elif graph_type == "Heatmap":
+                        vz.plot_heatmap(data=self.handler.usable_data)
+                        return
+                    else:
+                        QMessageBox.critical(
+                            self, "Error", f"Invalid graph type: {graph_type}"
+                        )
+                        return
+                    
+
+                dialog_indep = QDialog(self)
+                dialog_indep.setWindowTitle("Select Independent Variable")
+                layout_indep = QVBoxLayout()
+
+                indep_label = QLabel("Select Independent Variable: ")
+                layout_indep.addWidget(indep_label)
+                indep_combo = QComboBox(dialog)
+                indep_combo.addItems(valid_columns)
+                layout_indep.addWidget(indep_combo)
+
+                button_box_indep = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+                button_box_indep.accepted.connect(dialog_indep.accept)
+                button_box_indep.rejected.connect(dialog_indep.reject)
+                layout_indep.addWidget(button_box_indep)
+
+                dialog_indep.setLayout(layout_indep)
+
+                if dialog_indep.exec_() == QDialog.Accepted:
+                    indep_var = indep_combo.currentText()
+
+                    if self.handler.is_encoded:
+                        indep_var = self.get_encoded_column(indep_var)
+
+                    if graph_type == "Bar Graph":
+                        vz.plot_barplot(data=self.handler.usable_data, column=indep_var)
+                    elif graph_type == "Histogram":
+                        vz.plot_histogram(data=self.handler.usable_data, columns=indep_var)
+                    elif graph_type == "Box Plot":
+                        vz.plot_boxplot(data=self.handler.usable_data, x_col=indep_var, y_col=self.handler.dependent_variable)
+                    elif graph_type == "Scatter Plot":
+                        vz.plot_scatter(self.handler.usable_data, x_col=indep_var, y_col=self.handler.dependent_variable)
+                    elif graph_type == "Count Plot":
+                        vz.plot_count(self.handler.usable_data, column=indep_var)
+                    elif graph_type == "Pie Chart":
+                        vz.plot_piechart(data=self.handler.usable_data, column=indep_var)
+                    else:
+                        QMessageBox.critical(
+                            self, "Error", f"Invalid graph type: {graph_type}"
+                        )
+
         except ValueError as e:
             QMessageBox.critical(self, "Error", str(e))
 
