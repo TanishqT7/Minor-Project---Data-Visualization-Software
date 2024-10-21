@@ -506,7 +506,7 @@ class App(QMainWindow):
                     elif graph_type == "Histogram":
                         vz.plot_histogram(data=self.handler.usable_data, columns=indep_var)
                     elif graph_type == "Box Plot":
-                        vz.plot_boxplot(data=self.handler.usable_data, x_col=indep_var, y_col=self.handler.dependent_variable)
+                        vz.plot_boxplot(data=self.handler.usable_data, x_col=indep_var)
                     elif graph_type == "Scatter Plot":
                         vz.plot_scatter(self.handler.usable_data, x_col=indep_var, y_col=self.handler.dependent_variable)
                     elif graph_type == "Count Plot":
